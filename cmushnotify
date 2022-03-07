@@ -1,21 +1,21 @@
 #!/bin/sh
 
 # title			:cmushnotify
-# version		:1.0
+# version		:1.1
 # url			:https://github.com/Dimithrandir/cmushnotify
 # author		:Dimithrandir
-# description	:Sends notifications from cmus. Only fires a notification if a new song started playing after 1/4 of the duration of the previous song, to prevent notification stacking or manual playback notifications.
+# description	:Sends notifications from cmus. If dunst is not installed, only fires a notification if a new song started playing after 1/4 of the duration of the previous song, to prevent notification stacking or manual playback notifications.
 
-# Look for album art photos in the same folder as file provided as argument in this order: folder, cover, albumart, (front). If none found, try to extract embedded cover with ffmpeg. If none found, use default pic.
-albumart() {
+# Look for album art photos in the same folder as file provided as argument in this order: folder, cover, albumart, front, [ album name ]. If none found, try to extract embedded cover with ffmpeg. If none found, use default pic.
+get_albumart() {
 	local dir_name=$( dirname "$1" )
-	local names=(folder cover albumart front)
+	local names=(folder cover albumart front "$2") 
 	for item in "${names[@]}" ; do
-		img_folder=$( find "$dir_name" -maxdepth 1 -iregex ".*$item*\.\(jpg\|jpeg\|gif\|png\|\)$" -print -quit )
-		[ -n "$img_folder" ] && break
+		img_file=$( find "$dir_name" -maxdepth 1 -iregex ".*$item*\.\(jpg\|jpeg\|gif\|png\|\)$" -print -quit )
+		[ -n "$img_file" ] && break
 	done
-	[ -z "$img_folder" ] &&	ffmpeg -i "$1" -an -vcodec copy "$HOME/.config/cmus/.cmushnotify-cover.jpg" -y && img_folder="$HOME/.config/cmus/.cmushnotify-cover.jpg"
-	[ -z "$img_folder" ] && img_folder="media-optical-symbolic"
+	[ -z "$img_file" ] &&	ffmpeg -i "$1" -an -vcodec copy "$HOME/.config/cmus/.cmushnotify-cover.jpg" -y && img_file="$HOME/.config/cmus/.cmushnotify-cover.jpg"
+	[ -z "$img_file" ] && img_file="media-optical"
 }
 
 [ $# -eq 0 ] && exit 0
@@ -28,6 +28,13 @@ if [ $2 = 'playing' ] ; then
 		shift
 	done
 
+	# get album art
+	get_albumart "$_file" "$_album"
+
+	# with dunst
+	[ -n "/bin/dunst" ] && dunstify -r 36198 -i "$img_file" "Cmus • Now playing" "$_title\n$_artist\n$_album\n$_date" && exit 0
+
+	# without dunst
 	readonly tempfile="$HOME/.config/cmus/.cmushnotify.cache"
 
 	[ -f "$tempfile" ] && timegoal=$( cat "$tempfile" ) || timegoal=0
@@ -35,9 +42,7 @@ if [ $2 = 'playing' ] ; then
 	if [ $( date +%s ) -ge $timegoal ] ; then
 		let "timegoal=$( date +%s )+$_duration/4"
 		echo $timegoal > "$tempfile"
-		# get album art
-		albumart "$_file"
 		# send notification
-		notify-send -i "$img_folder" "Cmus • Now playing" "$_title\n$_artist\n$_album\n$_date"
+		notify-send -i "$img_file" "Cmus • Now playing" "$_title\n$_artist\n$_album\n$_date"
 	fi
 fi
