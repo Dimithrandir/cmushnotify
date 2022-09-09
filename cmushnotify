@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # title			:cmushnotify
-# version		:1.1
+# version		:1.2
 # url			:https://github.com/Dimithrandir/cmushnotify
 # author		:Dimithrandir
 # description	:Sends notifications from cmus. If dunst is not installed, only fires a notification if a new song started playing after 1/4 of the duration of the previous song, to prevent notification stacking or manual playback notifications.
@@ -14,7 +14,7 @@ get_albumart() {
 		img_file=$( find "$dir_name" -maxdepth 1 -iregex ".*$item*\.\(jpg\|jpeg\|gif\|png\|\)$" -print -quit )
 		[ -n "$img_file" ] && break
 	done
-	[ -z "$img_file" ] &&	ffmpeg -i "$1" -an -vcodec copy "$HOME/.config/cmus/.cmushnotify-cover.jpg" -y && img_file="$HOME/.config/cmus/.cmushnotify-cover.jpg"
+	[ -z "$img_file" ] && ffmpeg -i "$1" -an -vcodec copy "$HOME/.config/cmus/.cmushnotify-cover.jpg" -y && img_file="$HOME/.config/cmus/.cmushnotify-cover.jpg"
 	[ -z "$img_file" ] && img_file="media-optical"
 }
 
@@ -32,7 +32,7 @@ if [ $2 = 'playing' ] ; then
 	get_albumart "$_file" "$_album"
 
 	# with dunst
-	[ -n "/bin/dunst" ] && dunstify -r 36198 -i "$img_file" "Cmus • Now playing" "$_title\n$_artist\n$_album\n$_date" && exit 0
+	[ -f "/bin/dunst" ] && dunstify -r 36198 -i "$img_file" "Cmus • Now playing" "$_title\n$_artist\n$_album\n$_date" && exit 0
 
 	# without dunst
 	readonly tempfile="$HOME/.config/cmus/.cmushnotify.cache"
