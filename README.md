@@ -1,6 +1,6 @@
 # cmushnotify
 
-A simple bash shell script for showing notifications for [cmus - the C* Music Player](https://cmus.github.io/).
+A simple shell script for showing notifications for [cmus - the C* Music Player](https://cmus.github.io/).
 
 ![Notification sent by cmushnotify](screenshot.png "Notification sent by cmushnotify")
 
