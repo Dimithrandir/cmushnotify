@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # title			:cmushnotify
-# version		:1.2
+# version		:1.2.1
 # url			:https://github.com/Dimithrandir/cmushnotify
 # author		:Dimithrandir
 # description	:Sends notifications from cmus. If dunst is not installed, only fires a notification if a new song started playing after 1/4 of the duration of the previous song, to prevent notification stacking or manual playback notifications.
