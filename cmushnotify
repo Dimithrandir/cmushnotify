@@ -32,7 +32,7 @@ if [ $2 = 'playing' ] ; then
 	get_albumart "$_file" "$_album"
 
 	# with dunst
-	[ -f "/bin/dunst" ] && dunstify -r 36198 -i "$img_file" "Cmus • Now playing" "$_title\n$_artist\n$_album\n$_date" && exit 0
+	[ `command -v dunstify` ] && dunstify -r 36198 -i "$img_file" "Cmus • Now playing" "$_title\n$_artist\n$_album\n$_date" && exit 0
 
 	# without dunst
 	readonly tempfile="$HOME/.config/cmus/.cmushnotify.cache"
