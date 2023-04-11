@@ -1,48 +1,51 @@
 #!/bin/sh
 
 # title			:cmushnotify
-# version		:1.2.1
+# version		:1.2.2
 # url			:https://github.com/Dimithrandir/cmushnotify
 # author		:Dimithrandir
 # description	:Sends notifications from cmus. If dunst is not installed, only fires a notification if a new song started playing after 1/4 of the duration of the previous song, to prevent notification stacking or manual playback notifications.
 
-# Look for album art photos in the same folder as file provided as argument in this order: folder, cover, albumart, front, [ album name ]. If none found, try to extract embedded cover with ffmpeg. If none found, use default pic.
+# Look for album art photos in the same folder as file provided as argument in this order: folder, cover, albumart, front, [ album name ]. If none found, try to extract embedded cover with ffmpeg. If none found, or no ffmpeg, use default pic.
 get_albumart() {
-	local dir_name=$( dirname "$1" )
-	local names=(folder cover albumart front "$2") 
-	for item in "${names[@]}" ; do
+	dir_name=$( dirname "$1" )
+	names="folder cover albumart front '$2'" 
+	for item in ${names} ; do
 		img_file=$( find "$dir_name" -maxdepth 1 -iregex ".*$item*\.\(jpg\|jpeg\|gif\|png\|\)$" -print -quit )
 		[ -n "$img_file" ] && break
 	done
-	[ -z "$img_file" ] && ffmpeg -i "$1" -an -vcodec copy "$HOME/.config/cmus/.cmushnotify-cover.jpg" -y && img_file="$HOME/.config/cmus/.cmushnotify-cover.jpg"
+	[ -z "$img_file" ] && [ "$( command -v ffmpeg )" ] && ffmpeg -i "$1" -an -vcodec copy "$HOME/.config/cmus/.cmushnotify-cover.jpg" -y && img_file="$HOME/.config/cmus/.cmushnotify-cover.jpg"
 	[ -z "$img_file" ] && img_file="media-optical"
 }
 
 [ $# -eq 0 ] && exit 0
 
-if [ $2 = 'playing' ] ; then
+if [ "$2" = 'playing' ] ; then
 	# get all arguments
 	while [ $# -ge 2 ] ; do
-		eval _$1='$2'
+		eval "_$1"='$2'
 		shift
 		shift
 	done
+
+	notification_sum="Cmus • Now playing" 
+	notification_body="$_title\n$_artist\n$_album\n$_date"
 
 	# get album art
 	get_albumart "$_file" "$_album"
 
 	# with dunst
-	[ `command -v dunstify` ] && dunstify -r 36198 -i "$img_file" "Cmus • Now playing" "$_title\n$_artist\n$_album\n$_date" && exit 0
+	[ "$( command -v dunstify )" ] && dunstify -r 36198 -i "$img_file" "$notification_sum" "$notification_body" && exit 0
 
 	# without dunst
 	readonly tempfile="$HOME/.config/cmus/.cmushnotify.cache"
 
 	[ -f "$tempfile" ] && timegoal=$( cat "$tempfile" ) || timegoal=0
 
-	if [ $( date +%s ) -ge $timegoal ] ; then
-		let "timegoal=$( date +%s )+$_duration/4"
-		echo $timegoal > "$tempfile"
+	if [ "$( date +%s )" -ge "$timegoal" ] ; then
+		timegoal=$(( $( date +%s ) + _duration / 4 ))
+		echo "$timegoal" > "$tempfile"
 		# send notification
-		notify-send -i "$img_file" "Cmus • Now playing" "$_title\n$_artist\n$_album\n$_date"
+		notify-send -i "$img_file" "$notification_sum" "$notification_body"
 	fi
 fi

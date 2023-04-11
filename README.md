@@ -7,7 +7,7 @@ A simple shell script for showing notifications for [cmus - the C* Music Player]
 ### Dependencies
 
 * libnotify + a notification server
-* ffmpeg
+* ffmpeg (optional, for embedded album art)
 
 ### Installation
 
