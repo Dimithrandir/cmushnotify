@@ -9,7 +9,7 @@
 # Look for album art photos in the same folder as file provided as argument in this order: folder, cover, albumart, front, [ album name ]. If none found, try to extract embedded cover with ffmpeg. If none found, or no ffmpeg, use default pic.
 get_albumart() {
 	dir_name=$( dirname "$1" )
-	names="folder cover albumart front '$2'" 
+	names="folder cover albumart front $2" 
 	for item in ${names} ; do
 		img_file=$( find "$dir_name" -maxdepth 1 -iregex ".*$item*\.\(jpg\|jpeg\|gif\|png\|\)$" -print -quit )
 		[ -n "$img_file" ] && break
